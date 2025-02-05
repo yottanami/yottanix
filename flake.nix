@@ -12,6 +12,7 @@
       modules = [
         ./configuration.nix
       ];
+      specialArgs = { inherit inputs; }; # Pass inputs to configuration.nix
     };
   };
 }

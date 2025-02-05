@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   imports = [
@@ -20,7 +20,7 @@
   # Enable the graphical interface
   services.xserver.enable = true;
   services.xserver.windowManager.noteditor.enable = true;
-  services.xserver.windowManager.exwm.enable = true;	
+  services.xserver.windowManager.exwm.enable = true;
   services.xserver.xkb.layout = "us,ir";
   ##  services.xserver.xkb.options = "ctrl:swapcaps,grp:alt_caps_toggle";
   services.xserver.xkb.options = "grp:alt_caps_toggle";
@@ -148,7 +148,6 @@
       nixd # Nix daemon
       kicad-small # Electronic design automation software
       firefox
-      playwright-driver.browsers # Playwright browser drivers
       typescript
       typescript-language-server
       svelte-language-server
@@ -157,17 +156,17 @@
       teensy-udev-rules
       dunst
       libnotify
+      zoom-us
+      maven
     ];
   };
   
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
- 	  "plexamp" "slack" "teensy-udev-rules" "teensyduino" "idea-ultimate" "unrar"
+ 	  "plexamp" "slack" "teensy-udev-rules" "teensyduino" "idea-ultimate" "unrar" "zoom-us" "zoom"
   ];
   
   environment.sessionVariables = {
     NOTEDITOR_WM_PATH = "/home/yottanami/src/personal/noteditor/";
-    PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
-    PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
   };
 
 
@@ -196,7 +195,10 @@
   programs.udevil.enable = true;
   programs.fish.enable = true;
   programs.nix-ld.enable = true;
-  programs.java.enable = true;
+  #  programs.java.enable = true;
+    programs.java = {
+    enable = true;
+  };
 
   services.udev.packages = [ pkgs.via pkgs.teensy-udev-rules];
   ## services.udev.
@@ -229,10 +231,19 @@
     after = [ "network.target" "sound.target" ];
     wantedBy = [ "default.target" ];
     serviceConfig.ExecStart = "${pkgs.bluez}/bin/mpris-proxy";
-};
-
+  };
+  
+  system.autoUpgrade = {
+    enable = true;
+    flake = inputs.self.outPath;
+    flags = [
+      "--update-input" "nixpkgs"
+      "-L"
+    ];
+    dates = "02:00";
+    randomizedDelaySec = "45min";
+  };
   
   system.stateVersion = "24.13";
-
 
 }
