@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./nordvpn.nix
     ./noteditor.nix
   ];
 
@@ -30,6 +31,9 @@
 
   # Provides a standard interface for devices like touchpads, mice, and keyboards
   services.libinput.enable = true;
+
+  services.nordvpn.enable = true;
+
   
   # Allows unprivileged users to set their processes to run with real-time priority, which is necessary for pipewire
   security.rtkit.enable   = true;
@@ -116,30 +120,34 @@
   users.users.yottanami = {
     isNormalUser = true;
     shell        = pkgs.fish;
-    extraGroups  = [ "wheel" "audio" "realtime" "networkmanager" "docker" ];
+    extraGroups  = [ "wheel" "audio" "realtime" "networkmanager" "docker" "nordvpn"];
     packages     = with pkgs; [
       graphviz plantuml vlc audacity gimp alacritty libreoffice brave git gh jq
       k9s pavucontrol musescore prusa-slicer blender plexamp kubectl awscli2
       saml2aws slack helvum flameshot ffmpeg jetbrains.idea-ultimate nixd
       kicad-small firefox typescript typescript-language-server svelte-language-server
-      ruby-lsp antlr4 teensy-udev-rules libnotify zoom-us maven pianobooster
+      antlr4 teensy-udev-rules libnotify zoom-us maven pianobooster
       code-cursor terraform-ls terraform-docs tflint terraform pre-commit postman
     ];
   };
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "plexamp" "slack" "teensy-udev-rules" "teensyduino" "idea-ultimate" "unrar"
-    "zoom" "cursor" "terraform" "postman" "via"
+    "zoom" "cursor" "terraform" "postman" "via" "nordvpn"
   ];
 
   environment.sessionVariables = {
     NOTEDITOR_WM_PATH = "/home/yottanami/src/personal/noteditor/";
   };
-
+  
   environment.systemPackages = with pkgs; [
     wget  emacs  spaceFM  spice-gtk  unzip  unrar  zip  socat
     nodejs docker-compose python3 python3Packages.pip
     platformio libuv cifs-utils vim xautolock system-config-printer
+    ruby-lsp
+    ruby
+    rubyPackages.rubocop
+    rubyPackages.rubocop-performance
   ];
 
   programs.udevil.enable = true;
