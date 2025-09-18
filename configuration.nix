@@ -3,8 +3,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./nordvpn.nix
     ./noteditor.nix
+    inputs.sops-nix.nixosModules.sops 
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -20,20 +20,25 @@
 
   services.xserver.enable = true;
   services.xserver.windowManager.noteditor.enable = true;
-  services.xserver.windowManager.exwm.enable = true;
+  services.xserver.windowManager.exwm.enable = true;  
   services.xserver.xkb.layout = "us,ir";
   ##  services.xserver.xkb.options = "ctrl:swapcaps,grp:alt_caps_toggle";
   services.xserver.xkb.options = "grp:alt_caps_toggle";
 
-  services.xserver.displayManager.sessionCommands = ''
-    xautolock -time 10 -locker "i3lock" &
-  '';
+  systemd.user.services.xautolock = {
+    description = "Start xautolock with cleanup";
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStartPre = "${pkgs.procps}/bin/pkill xautolock || true";
+      ExecStart = "${pkgs.xautolock}/bin/xautolock -time 10 -locker 'dm-tool lock'";
+      Restart = "always";
+    };
+    wantedBy = [ "default.target" ];
+  };
 
   # Provides a standard interface for devices like touchpads, mice, and keyboards
   services.libinput.enable = true;
-
-  services.nordvpn.enable = true;
-
   
   # Allows unprivileged users to set their processes to run with real-time priority, which is necessary for pipewire
   security.rtkit.enable   = true;
@@ -44,53 +49,6 @@
     alsa.enable     = true;
     alsa.support32Bit = true;
     pulse.enable    = true;
-
-    # extraConfig.pipewire = {
-    #   "beep" = {
-         #  "context.properties" = {
-    #          "module.x11.bell" = false;
-    #           };
-    #   };
-    #   "adam" = {
-    #     "context.modules" = [
-    #     {
-    #       "name" = "libpipewire-module-loopback";
-    #       "args" = {
-    #         "node.description" = "Adam speakers";
-    #         "capture.props" = {
-    #           "node.name" = "Adam_speakers";
-    #           "media.class" = "Audio/Sink";
-         #     "audio.position" = "[ FL FR ]";
-    #         };
-    #         "playback.props" = {
-    #            "node.name" = "playback.Adam_Speakers";
-    #            "audio.position" = "[ FL FR ]";
-    #            "target.object" = "alsa_input.usb-LOUD_Technologies_Inc._ProFX-00.iec958-stereo";
-    #            "stream.dont-remix" = "true";
-    #            "node.passive" = "true";
-    #         };
-    #       };
-    #    }
-    #    {
-    #      "name" = "libpipewire-module-loopback";
-    #       "args" = {
-    #         "node.description" = "Adam speakers";
-    #         "capture.props" = {
-    #           "media.class" = "Audio/Sink";
-    #           "audio.position" = "[ FL FR ]";
-    #         };
-    #         "playback.props" = {
-    #             "node.name" = "playback.Adam_Speakers";
-    #             "audio.position" = "[ RL RR ]";
-    #             "target.object" = "alsa_input.usb-LOUD_Technologies_Inc._ProFX-00.iec958-stereo";
-    #             "stream.dont-remix" = "true";
-    #             "node.passive" = "true";
-    #           };
-    #         };
-    #       }
-    #    ];
-    #   };
-    # };
   };
 
   users.groups.realtime = {};
@@ -120,20 +78,57 @@
   users.users.yottanami = {
     isNormalUser = true;
     shell        = pkgs.fish;
-    extraGroups  = [ "wheel" "audio" "realtime" "networkmanager" "docker" "nordvpn"];
+    extraGroups  = [ "wheel" "audio" "realtime" "networkmanager" "docker" ];
     packages     = with pkgs; [
-      graphviz plantuml vlc audacity gimp alacritty libreoffice brave git gh jq
-      k9s pavucontrol musescore prusa-slicer blender plexamp kubectl awscli2
-      saml2aws slack helvum flameshot ffmpeg jetbrains.idea-ultimate nixd
-      kicad-small firefox typescript typescript-language-server svelte-language-server
-      antlr4 teensy-udev-rules libnotify zoom-us maven pianobooster
-      code-cursor terraform-ls terraform-docs tflint terraform pre-commit postman
+      graphviz
+      plantuml
+      vlc
+      audacity
+      gimp
+      alacritty
+      libreoffice
+      brave
+      git
+      gh
+      jq
+      k9s
+      pavucontrol
+      musescore
+      prusa-slicer
+      blender
+      plexamp
+      kubectl
+      awscli2
+      saml2aws
+      slack
+      helvum
+      flameshot
+      jetbrains.idea-ultimate
+      kicad-small
+      firefox
+      typescript
+      typescript-language-server
+      svelte-language-server
+      antlr4
+      teensy-udev-rules
+      libnotify
+      zoom-us
+      maven
+      pianobooster
+      tflint
+      terraform
+      terraform-docs
+      terraform-ls
+      pre-commit
+      postman
+      aider-chat-full
+      spotify 
     ];
   };
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "plexamp" "slack" "teensy-udev-rules" "teensyduino" "idea-ultimate" "unrar"
-    "zoom" "cursor" "terraform" "postman" "via" "nordvpn"
+    "zoom" "cursor" "terraform" "postman" "via" "spotify"
   ];
 
   environment.sessionVariables = {
@@ -141,13 +136,31 @@
   };
   
   environment.systemPackages = with pkgs; [
-    wget  emacs  spaceFM  spice-gtk  unzip  unrar  zip  socat
-    nodejs docker-compose python3 python3Packages.pip
-    platformio libuv cifs-utils vim xautolock system-config-printer
+    wget
+    emacs
+    spaceFM
+    spice-gtk
+    unzip
+    unrar
+    zip
+    socat
+    ffmpeg
+    nodejs
+    docker-compose
+    python3
+    python3Packages.pip
+    platformio
+    libuv
+    cifs-utils
+    xautolock
+    system-config-printer
     ruby-lsp
     ruby
     rubyPackages.rubocop
     rubyPackages.rubocop-performance
+    age
+    htop
+    nixd
   ];
 
   programs.udevil.enable = true;
@@ -176,10 +189,15 @@
     LidSwitchIgnoreInhibited=yes
   '';
 
-  services.hardware.bolt.enable = true;
+  services.hardware.bolt.enable  = true;
   hardware.bluetooth.enable      = true;
   hardware.bluetooth.powerOnBoot = true;
   services.blueman.enable        = true;
+
+  ## REMOVE ME
+  # hardware.enableAllFirmware = true;
+  # hardware.enableRedistributableFirmware = true;
+  # nixpkgs.config.allowUnfree = true;
 
   systemd.user.services.mpris-proxy = {
     description   = "Mpris proxy";
@@ -196,5 +214,19 @@
     randomizedDelaySec = "45min";
   };
 
-  system.stateVersion = "24.13";
+
+  ########################################
+  ##  SOPS‑NIX: secrets → env‑file
+  ########################################
+
+  # sops = {
+  #   defaultSopsFile = ./secrets/openrouter.yaml;
+  #   age.keyFile     = "/var/keys/host.agekey";
+  #   secrets.OPENROUTER_API_KEY = { };
+  # };
+
+  # # export to every new login shell
+  # environment.sessionVariables.OPENROUTER_API_KEY =
+  #   config.sops.secrets.OPENROUTER_API_KEY;
+  system.stateVersion = "24.14";
 }
