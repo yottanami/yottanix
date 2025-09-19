@@ -117,7 +117,6 @@
       pianobooster
       tflint
       terraform
-      terraform-docs
       terraform-ls
       pre-commit
       postman
@@ -182,12 +181,14 @@
     })
   ];
 
-  services.logind.extraConfig = ''
-    HandleLidSwitch=suspend-then-hibernate
-    HandleLidSwitchExternalPower=suspend-then-hibernate
-    HandleLidSwitchDocked=ignore
-    LidSwitchIgnoreInhibited=yes
-  '';
+  services.logind.settings = {
+    Login = {
+      HandleLidSwitch = "suspend-then-hibernate";
+      HandleLidSwitchExternalPower = "suspend-then-hibernate";
+      HandleLidSwitchDocked = "ignore";
+      LidSwitchIgnoreInhibited = "yes";
+    };
+  };
 
   services.hardware.bolt.enable  = true;
   hardware.bluetooth.enable      = true;
