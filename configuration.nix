@@ -44,11 +44,8 @@ in {
     serviceConfig = {
       Type = "simple";
       ExecStartPre = xautolockCleanup;
-      ExecStart = [
-        "${pkgs.xautolock}/bin/xautolock"
-        "-time" "10"
-        "-locker" xautolockLocker
-      ];
+      # single ExecStart command line (instead of a list of words)
+      ExecStart = "${pkgs.xautolock}/bin/xautolock -time 10 -locker ${xautolockLocker}";
       Restart = "always";
     };
   };
@@ -93,7 +90,7 @@ in {
   users.users.yottanami = {
     isNormalUser = true;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout"];
+    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout" ];
     packages = with pkgs; [
       graphviz
       plantuml
@@ -196,13 +193,16 @@ in {
     })
   ];
 
+  # Updated for 24.11: structured settings instead of extraConfig
   services.logind = {
     lidSwitch = "suspend-then-hibernate";
     lidSwitchExternalPower = "suspend-then-hibernate";
     lidSwitchDocked = "ignore";
-    extraConfig = ''
-      LidSwitchIgnoreInhibited=yes
-    '';
+    settings = {
+      Login = {
+        LidSwitchIgnoreInhibited = true;
+      };
+    };
   };
 
   services.hardware.bolt.enable = true;
@@ -255,5 +255,5 @@ in {
   # environment.sessionVariables.OPENROUTER_API_KEY =
   #   config.sops.secrets.OPENROUTER_API_KEY;
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.06";
 }
