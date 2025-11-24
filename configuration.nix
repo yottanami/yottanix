@@ -93,7 +93,7 @@ in {
   users.users.yottanami = {
     isNormalUser = true;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" ];
+    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout"];
     packages = with pkgs; [
       graphviz
       plantuml
@@ -175,6 +175,7 @@ in {
     age
     htop
     nixd
+    codex
   ];
 
   programs.udevil.enable = true;
