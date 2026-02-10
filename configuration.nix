@@ -10,6 +10,7 @@ let
   '';
 
   bluezWithCodecs = pkgs.bluezFull or pkgs.bluez;
+
 in {
   imports = [
     ./hardware-configuration.nix
@@ -22,6 +23,8 @@ in {
     configurationLimit = 5;
   };
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.supportedFilesystems = [ "ntfs" ];
+
 
   networking.hostName = "yottawork";
   networking.networkmanager.enable = true;
@@ -44,7 +47,6 @@ in {
     serviceConfig = {
       Type = "simple";
       ExecStartPre = xautolockCleanup;
-      # single ExecStart command line (instead of a list of words)
       ExecStart = "${pkgs.xautolock}/bin/xautolock -time 10 -locker ${xautolockLocker}";
       Restart = "always";
     };
@@ -110,7 +112,6 @@ in {
       blender
       plexamp
       kubectl
-      awscli2
       saml2aws
       slack
       helvum
@@ -134,6 +135,7 @@ in {
       postman
       aider-chat-full
       spotify
+      awscli2
     ];
   };
 
@@ -173,6 +175,7 @@ in {
     htop
     nixd
     codex
+    ntfs3g
   ];
 
   programs.udevil.enable = true;
@@ -182,6 +185,7 @@ in {
 
   services.udev.packages = [ pkgs.via pkgs.teensy-udev-rules ];
 
+  # Keep your udevil overlay tweak
   nixpkgs.overlays = [
     (final: prev: {
       udevil = prev.udevil.overrideAttrs (_: {
@@ -193,19 +197,16 @@ in {
     })
   ];
 
-  # Updated for 24.11: structured settings instead of extraConfig
-  services.logind = {
-    lidSwitch = "suspend-then-hibernate";
-    lidSwitchExternalPower = "suspend-then-hibernate";
-    lidSwitchDocked = "ignore";
-    settings = {
-      Login = {
-        LidSwitchIgnoreInhibited = true;
-      };
-    };
+  # NEW: structured systemd-logind settings (replace old lidSwitch* + extraConfig)
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+    HandleLidSwitchDocked = "ignore";
+    LidSwitchIgnoreInhibited = true;
   };
 
   services.hardware.bolt.enable = true;
+
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
