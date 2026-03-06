@@ -116,7 +116,7 @@ in {
       slack
       helvum
       flameshot
-      jetbrains.idea-ultimate
+      jetbrains.idea
       kicad-small
       firefox
       typescript
@@ -151,7 +151,7 @@ in {
   environment.systemPackages = with pkgs; [
     wget
     emacs
-    spaceFM
+    pcmanfm
     spice-gtk
     unzip
     unrar

@@ -29,14 +29,14 @@ in {
     };
   };
 
-  options.services.dunst = {
-    enable = mkEnableOption (mdDoc "Enable the Dunst notification daemon.");
-    settings = mkOption {
-      type = types.attrs;
-      default = {};
-      description = mdDoc "Settings for the Dunst notification daemon.";
-    };
-  };
+  # options.services.dunst = {
+  #   enable = mkEnableOption (mdDoc "Enable the Dunst notification daemon.");
+  #   settings = mkOption {
+  #     type = types.attrs;
+  #     default = {};
+  #     description = mdDoc "Settings for the Dunst notification daemon.";
+  #   };
+  # };
 
   config = mkIf wmCfg.enable {
     ######################################
@@ -104,15 +104,15 @@ in {
       };
     };
 
-    systemd.user.services.dunst = {
-      description = "Dunst Notification Daemon";
-      after = [ "graphical-session.target" ];
-      serviceConfig = {
-        ExecStart = "${pkgs.dunst}/bin/dunst";
-        Restart = "always";
-      };
-      wantedBy = [ "default.target" ];
-    };
+    # systemd.user.services.dunst = {
+    #   description = "Dunst Notification Daemon";
+    #   after = [ "graphical-session.target" ];
+    #   serviceConfig = {
+    #     ExecStart = "${pkgs.dunst}/bin/dunst";
+    #     Restart = "always";
+    #   };
+    #   wantedBy = [ "default.target" ];
+    # };
 
     ######################################
     # 3. Environment Variables and Packages
