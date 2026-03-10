@@ -23,10 +23,11 @@ in {
     configurationLimit = 5;
   };
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "ntfs" ];
+  boot.supportedFilesystems = [ "ntfs" "zfs" ];
 
 
   networking.hostName = "yottawork";
+  networking.hostId = "8425e349";
   networking.networkmanager.enable = true;
 
   time.timeZone = "Europe/Amsterdam";
