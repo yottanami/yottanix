@@ -93,7 +93,7 @@ in {
   users.users.yottanami = {
     isNormalUser = true;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout" ];
+    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout"];
     packages = with pkgs; [
       graphviz
       plantuml
@@ -115,7 +115,6 @@ in {
       kubectl
       saml2aws
       slack
-      helvum
       flameshot
       jetbrains.idea
       kicad-small
@@ -125,6 +124,7 @@ in {
       svelte-language-server
       antlr4
       teensy-udev-rules
+      teensy-loader-cli
       libnotify
       zoom-us
       maven
