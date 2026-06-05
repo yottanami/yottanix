@@ -74,7 +74,7 @@ in {
   };
 
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "ntfs" "zfs" ];
+  boot.supportedFilesystems = [ "ntfs" ];
 
   networking.hostName = "yottawork";
   networking.hostId = "8425e349";
