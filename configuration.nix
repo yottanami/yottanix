@@ -9,8 +9,58 @@ let
     ${pkgs.procps}/bin/pkill xautolock || true
   '';
 
-  bluezWithCodecs = pkgs.bluezFull or pkgs.bluez;
+  audientMonitor = pkgs.writeShellApplication {
+    name = "audient-monitor";
+    runtimeInputs = with pkgs; [ pipewire gnugrep ];
+    text = ''
+      set -euo pipefail
 
+      if [[ $# -ne 1 || ( "$1" != "on" && "$1" != "off" ) ]]; then
+        echo "usage: audient-monitor on|off" >&2
+        exit 1
+      fi
+
+      capture_prefix="alsa_input.usb-Audient_Audient_iD14-00.pro-input-0:capture_AUX"
+      playback_ports=(
+        "alsa_output.usb-Audient_Audient_iD14-00.pro-output-0:playback_AUX0"
+        "alsa_output.usb-Audient_Audient_iD14-00.pro-output-0:playback_AUX1"
+      )
+
+      capture_ports=()
+      available_ports="$(${pkgs.pipewire}/bin/pw-link -o)"
+
+      for index in 0 1 2 3 4 5 6 7 8 9 10 11; do
+        port="''${capture_prefix}''${index}"
+        if printf '%s\n' "$available_ports" | grep -qxF "$port"; then
+          capture_ports+=("$port")
+        fi
+      done
+
+      if [[ ''${#capture_ports[@]} -eq 0 ]]; then
+        echo "No Audient iD14 capture ports were found." >&2
+        exit 1
+      fi
+
+      # With ADAT attached the iD14 exposes 12 capture channels:
+      # 10 physical inputs followed by 2 loopback channels.
+      if [[ ''${#capture_ports[@]} -ge 12 ]]; then
+        capture_ports=("''${capture_ports[@]:0:10}")
+      fi
+
+      pw_link_args=()
+      if [[ "$1" == "off" ]]; then
+        pw_link_args=(-d)
+      fi
+
+      for capture_port in "''${capture_ports[@]}"; do
+        for playback_port in "''${playback_ports[@]}"; do
+          ${pkgs.pipewire}/bin/pw-link "''${pw_link_args[@]}" "$capture_port" "$playback_port" || true
+        done
+      done
+    '';
+  };
+
+  bluezWithCodecs = pkgs.bluezFull or pkgs.bluez;
 in {
   imports = [
     ./hardware-configuration.nix
@@ -22,9 +72,9 @@ in {
     enable = true;
     configurationLimit = 5;
   };
+
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" "zfs" ];
-
 
   networking.hostName = "yottawork";
   networking.hostId = "8425e349";
@@ -67,7 +117,7 @@ in {
     jack.enable = true;
   };
 
-  users.groups.realtime = {};
+  users.groups.realtime = { };
 
   virtualisation.docker.enable = true;
   virtualisation.docker.rootless = {
@@ -93,7 +143,7 @@ in {
   users.users.yottanami = {
     isNormalUser = true;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout"];
+    extraGroups = [ "wheel" "audio" "realtime" "networkmanager" "docker" "dialout" ];
     packages = with pkgs; [
       graphviz
       plantuml
@@ -140,10 +190,23 @@ in {
     ];
   };
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "plexamp" "slack" "teensy-udev-rules" "teensyduino" "idea-ultimate" "unrar"
-    "zoom" "cursor" "terraform" "postman" "via" "spotify"
-  ];
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "plexamp"
+      "slack"
+      "teensy-udev-rules"
+      "teensyduino"
+      "idea-ultimate"
+      "unrar"
+      "zoom"
+      "cursor"
+      "terraform"
+      "postman"
+      "via"
+      "spotify"
+    ];
+
+  nixpkgs.config.allowUnfree = true;
 
   environment.sessionVariables = {
     NOTEDITOR_WM_PATH = "/home/yottanami/src/personal/noteditor/";
@@ -177,16 +240,27 @@ in {
     nixd
     codex
     ntfs3g
+    mixid
   ];
 
   programs.udevil.enable = true;
-  programs.fish.enable = true;
   programs.nix-ld.enable = true;
   programs.java.enable = true;
 
+  programs.fish = {
+    enable = true;
+    shellAliases = {
+      monitor-on = "${audientMonitor}/bin/audient-monitor on";
+      monitor-off = "${audientMonitor}/bin/audient-monitor off";
+    };
+  };
+
   services.udev.packages = [ pkgs.via pkgs.teensy-udev-rules ];
 
-  # Keep your udevil overlay tweak
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ATTR{idVendor}=="2708", MODE="0660", GROUP="audio"
+  '';
+
   nixpkgs.overlays = [
     (final: prev: {
       udevil = prev.udevil.overrideAttrs (_: {
@@ -196,9 +270,75 @@ in {
         '';
       });
     })
+
+    (final: prev: {
+      mixid = prev.stdenv.mkDerivation rec {
+        pname = "mixid";
+        version = "0.1.6";
+
+        src = prev.fetchFromGitHub {
+          owner = "TheOnlyJoey";
+          repo = "MixiD";
+          rev = version;
+          hash = "sha256-IGiwnODVJ8TOrBVb+AkZGvY+yUgKCcAB/oMqsvRTD5A=";
+        };
+
+        imguiSrc = prev.fetchFromGitHub {
+          owner = "ocornut";
+          repo = "imgui";
+          rev = "v1.92.4";
+          hash = "sha256-DyQ2fh749S41UFdLto7TtxsnBsd7CBzAUFq36LeZZ5Y=";
+        };
+
+        nativeBuildInputs = with prev; [
+          cmake
+          pkg-config
+        ];
+
+        buildInputs = with prev; [
+          glfw
+          glew
+          libusb1
+          libGL
+          libx11
+          libxcursor
+          libxi
+          libxinerama
+          libxrandr
+          wayland
+        ];
+
+        cmakeFlags = [
+          "-DLIBUSB_INCLUDE_DIR=${prev.libusb1.dev}/include/libusb-1.0"
+          "-DLIBUSB_INCLUDE_DIRS=${prev.libusb1.dev}/include/libusb-1.0"
+          "-DLIBUSB_LIBRARIES=${prev.libusb1}/lib/libusb-1.0.so"
+        ];
+
+        postPatch = ''
+          substituteInPlace CMakeLists.txt \
+            --replace-fail \
+              'URL https://github.com/ocornut/imgui/archive/refs/tags/v1.92.4.tar.gz' \
+              'SOURCE_DIR ${imguiSrc}'
+        '';
+
+        installPhase = ''
+          runHook preInstall
+          install -Dm755 MixiD $out/bin/MixiD
+          ln -s $out/bin/MixiD $out/bin/mixid
+          runHook postInstall
+        '';
+
+        meta = with prev.lib; {
+          description = "Unofficial Linux control panel for Audient iD interfaces";
+          homepage = "https://github.com/TheOnlyJoey/MixiD";
+          license = licenses.mit;
+          platforms = platforms.linux;
+          mainProgram = "mixid";
+        };
+      };
+    })
   ];
 
-  # NEW: structured systemd-logind settings (replace old lidSwitch* + extraConfig)
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend-then-hibernate";
     HandleLidSwitchExternalPower = "suspend-then-hibernate";
@@ -213,6 +353,7 @@ in {
     powerOnBoot = true;
     package = bluezWithCodecs;
   };
+
   services.blueman.enable = true;
 
   services.pipewire.wireplumber.configPackages = [
@@ -231,7 +372,6 @@ in {
 
   hardware.enableAllFirmware = true;
   hardware.enableRedistributableFirmware = true;
-  nixpkgs.config.allowUnfree = true;
 
   systemd.user.services.mpris-proxy = {
     description = "Mpris proxy";
@@ -248,7 +388,6 @@ in {
     randomizedDelaySec = "45min";
   };
 
-  ## Uncomment once the secret file is staged.
   # sops = {
   #   defaultSopsFile = ./secrets/openrouter.yaml;
   #   age.keyFile = "/var/keys/host.agekey";
