@@ -239,6 +239,7 @@ in {
     htop
     nixd
     codex
+    claude-code
     ntfs3g
     mixid
   ];
