@@ -79,6 +79,8 @@ in {
   networking.hostName = "yottawork";
   networking.hostId = "8425e349";
   networking.networkmanager.enable = true;
+  # Allow the dev backend (uvicorn :8000) to be reached from a phone on the LAN.
+  networking.firewall.allowedTCPPorts = [ 8000 ];
 
   time.timeZone = "Europe/Amsterdam";
 
@@ -242,6 +244,9 @@ in {
     claude-code
     ntfs3g
     mixid
+    # `adb` for Flutter on-device dev. systemd (>=258) sets udev uaccess rules
+    # automatically, so no `programs.adb`/`adbusers` group is needed anymore.
+    android-tools
   ];
 
   programs.udevil.enable = true;
