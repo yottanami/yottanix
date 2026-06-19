@@ -139,6 +139,8 @@ in {
     enableDefaultPackages = true;
     packages = with pkgs; [
       vazir-fonts
+      open-dyslexic
+      nerd-fonts.open-dyslexic
     ];
   };
 
