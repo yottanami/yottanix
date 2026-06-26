@@ -61,6 +61,14 @@ let
   };
 
   bluezWithCodecs = pkgs.bluezFull or pkgs.bluez;
+
+  # `claude` (from pkgs.claude-code) uses the default ~/.claude config (work
+  # account). `pclaude` points at a separate config dir so it can be logged in
+  # with the personal account independently.
+  pclaude = pkgs.writeShellScriptBin "pclaude" ''
+    export CLAUDE_CONFIG_DIR="$HOME/.pclaude"
+    exec ${pkgs.claude-code}/bin/claude "$@"
+  '';
 in {
   imports = [
     ./hardware-configuration.nix
@@ -244,6 +252,7 @@ in {
     nixd
     codex
     claude-code
+    pclaude
     ntfs3g
     mixid
     # `adb` for Flutter on-device dev. systemd (>=258) sets udev uaccess rules
