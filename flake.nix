@@ -11,13 +11,17 @@
     noteditor.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }@inputs: {
-    nixosConfigurations.yottawork = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        ./configuration.nix
-      ];
-      specialArgs = { inherit inputs; }; # Pass inputs to configuration.nix
+  outputs = { self, nixpkgs, ... }@inputs:
+    let
+      mkHost = hostPath: nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [ hostPath ];
+        specialArgs = { inherit inputs; }; # Pass inputs to host modules
+      };
+    in {
+      nixosConfigurations = {
+        yottapersonal = mkHost ./hosts/yottaPersonal;
+        yottawork = mkHost ./hosts/yottaWork;
+      };
     };
-  };
 }
