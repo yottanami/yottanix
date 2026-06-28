@@ -1,0 +1,27 @@
+// US layout with a "number layer" on the QWERTY top letter row.
+//
+// Right Alt (AltGr) is the Level-3 chooser (set via the lv3:ralt_switch
+// option in configuration.nix). With the broken physical number row:
+//
+//   Right Alt        + Q W E R T Y U I O P  ->  1 2 3 4 5 6 7 8 9 0
+//   Right Alt + Shift + Q W E R T Y U I O P  ->  ! @ # $ % ^ & * ( )
+//
+// Plain and Shifted letters keep their normal meaning, so typing is unchanged.
+
+xkb_symbols "basic" {
+    include "us(basic)"
+
+    name[Group1] = "English (US, QWERTY number layer)";
+
+    //                          base  shift  AltGr  AltGr+Shift
+    key <AD01> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ q, Q, 1, exclam       ] };
+    key <AD02> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ w, W, 2, at           ] };
+    key <AD03> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ e, E, 3, numbersign   ] };
+    key <AD04> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ r, R, 4, dollar       ] };
+    key <AD05> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ t, T, 5, percent      ] };
+    key <AD06> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ y, Y, 6, asciicircum  ] };
+    key <AD07> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ u, U, 7, ampersand    ] };
+    key <AD08> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ i, I, 8, asterisk     ] };
+    key <AD09> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ o, O, 9, parenleft    ] };
+    key <AD10> { type[Group1]="FOUR_LEVEL_SEMIALPHABETIC", [ p, P, 0, parenright   ] };
+};

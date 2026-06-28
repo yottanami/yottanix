@@ -16,9 +16,27 @@
         "type": "github"
       }
     },
+    "noteditor": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782605205,
+        "narHash": "sha256-UBlzFfsvlWdXK0MTSixeRhpv8mghmkMHLEW82vJfUOs=",
+        "path": "/home/yottanami/src/personal/noteditor",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/yottanami/src/personal/noteditor",
+        "type": "path"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
+        "noteditor": "noteditor",
         "sops-nix": "sops-nix"
       }
     },
